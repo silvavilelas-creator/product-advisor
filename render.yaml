@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: product-advisor
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: KEY
+        value: productadvisor2024secretkey
+      - key: SECRET
+        value: productadvisor2024secret
+      - key: DB_CLIENT
+        value: pg
+      - key: DB_HOST
+        value: aws-0-eu-west-1.pooler.supabase.com
+      - key: DB_PORT
+        value: 6543
+      - key: DB_DATABASE
+        value: postgres
+      - key: DB_USER
+        value: postgres.hhltetlifatsskrfkywu
+      - key: DB_PASSWORD
+        value: capSpire!2026
+      - key: DB_SSL
+        value: false
+      - key: NODE_TLS_REJECT_UNAUTHORIZED
+        value: 0
+      - key: PORT
+        value: 8055
+      - key: ADMIN_EMAIL
+        value: silvavilelas@gmail.com
+      - key: ADMIN_PASSWORD
+        value: capSpire!2026
