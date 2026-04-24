@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Advisor</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #0a0e1a; color: #e2e8f0; font-size: 13px; }
+  header { background: #0d1424; border-bottom: 1px solid #1e2d40; padding: 0 20px; display: flex; align-items: center; gap: 16px; height: 52px; position: sticky; top: 0; z-index: 50; flex-wrap: wrap; }
+  .logo { font-weight: 700; font-size: 15px; color: #60a5fa; }
+  .sub { font-size: 11px; color: #475569; margin-left: 4px; }
+  nav { display: flex; gap: 2px; margin-left: auto; flex-wrap: wrap; padding: 4px 0; }
+  .tab { padding: 5px 11px; font-size: 12px; border: none; border-radius: 6px; cursor: pointer; background: transparent; color: #64748b; font-family: inherit; }
+  .tab.active { background: #1d4ed8; color: #bfdbfe; font-weight: 600; }
+  main { padding: 16px; max-width: 1400px; margin: 0 auto; }
+  .card { background: #0d1424; border: 1px solid #1e2d40; border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
+  .card-head { padding: 10px 16px; border-bottom: 1px solid #1e2d40; display: flex; align-items: center; gap: 10px; background: #0a1020; }
+  .card-title { font-weight: 600; font-size: 13px; }
+  .card-meta { font-size: 11px; color: #475569; margin-left: auto; }
+  .filters { padding: 10px 16px; border-bottom: 1px solid #1e2d40; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; background: #0a1020; }
+  input, select { background: #111827; border: 1px solid #1e2d40; border-radius: 6px; color: #e2e8f0; padding: 5px 10px; font-size: 12px; font-family: inherit; outline: none; }
+  input { width: 200px; }
+  .btn { padding: 5px 12px; font-size: 11px; font-weight: 600; border: none; border-radius: 6px; cursor: pointer; font-family: inherit; background: #1e2d40; color: #64748b; }
+  .btn-primary { background: #1d4ed8; color: #bfdbfe; }
+  .btn-danger { background: #450a0a; color: #fca5a5; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { padding: 8px 14px; text-align: left; font-size: 11px; font-weight: 600; color: #475569; border-bottom: 1px solid #1e2d40; background: #0a1020; text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
+  td { padding: 8px 14px; border-bottom: 1px solid #111827; color: #cbd5e1; vertical-align: middle; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; }
+  .pager { display: flex; gap: 8px; padding: 8px 16px; border-top: 1px solid #1e2d40; font-size: 11px; color: #475569; align-items: center; }
+  .stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px; }
+  .stat { background: #0d1424; border: 1px solid #1e2d40; border-radius: 8px; padding: 16px 20px; text-align: center; }
+  .stat-n { font-size: 28px; font-weight: 700; color: #60a5fa; }
+  .stat-l { font-size: 11px; color: #475569; margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
+  .bar-wrap { height: 4px; background: #1e2d40; border-radius: 2px; overflow: hidden; }
+  .bar-inner { height: 100%; border-radius: 2px; background: #1d4ed8; }
+  .loading { padding: 32px; text-align: center; color: #475569; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  a { color: #60a5fa; text-decoration: none; }
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.85); z-index: 999; align-items: center; justify-content: center; padding: 20px; }
+  .modal-bg.open { display: flex; }
+  .modal-box { background: #0d1424; border: 1px solid #1e2d40; border-radius: 10px; width: 100%; max-width: 520px; max-height: 85vh; overflow-y: auto; padding: 24px; }
+  .modal-head { display: flex; align-items: center; margin-bottom: 18px; }
+  .fg { margin-bottom: 12px; }
+  .lbl { display: block; font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 4px; text-transform: uppercase; }
+  .fg input, .fg select, .fg textarea { width: 100%; }
+  .fg textarea { min-height: 60px; resize: vertical; }
+  .section { display: none; }
+  .section.active { display: block; }
+  .row-item { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #111827; }
+  @media(max-width:768px) { .stat-grid { grid-template-columns: repeat(2,1fr); } .two-col { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <div><span class="logo">Product Advisor</span><span class="sub">CTRM &amp; Risk Management Intelligence</span></div>
+  <nav id="nav"></nav>
+</header>
+<main>
+  <div id="section-overview" class="section active"></div>
+  <div id="section-vendors" class="section"></div>
+  <div id="section-products" class="section"></div>
+  <div id="section-ctrm" class="section"></div>
+  <div id="section-risk" class="section"></div>
+  <div id="section-commodities" class="section"></div>
+  <div id="section-geo" class="section"></div>
+  <div id="section-contacts" class="section"></div>
+</main>
+
+<div class="modal-bg" id="modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <strong id="modal-title" style="font-size:14px"></strong>
+      <button class="btn" style="margin-left:auto" onclick="closeModal()">✕ Close</button>
+    </div>
+    <div id="modal-fields"></div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-primary" onclick="saveModal()">💾 Save</button>
+      <button class="btn" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const URL = "https://hhltetlifatsskrfkywu.supabase.co";
+const KEY = "sb_publishable_qT84fC6EBYcMndu0IW4log_ksZnx5cP";
+
+const COV_COLOR = {D:"#22c55e",C:"#f59e0b",N:"#ef4444",X:"#64748b"};
+const COV_LABEL = {D:"Deployed",C:"Capable",N:"Not Capable",X:"N/A"};
+const getCode = l => { if(!l) return "X"; if(l.includes("deployed")) return "D"; if(l.includes("capable")) return "C"; if(l.includes("not currently")) return "N"; return "X"; };
+
+let state = { vendors:[], products:[], contacts:[], ctrm:[], risk:[], geo:[], pcc:[], pages:{}, filters:{} };
+let modalSaveFn = null;
+
+async function apiFetch(table, opts={}) {
+  const {method="GET",body,params={}} = opts;
+  let url = URL+"/rest/v1/"+table;
+  const qp = new URLSearchParams(params);
+  if([...qp].length) url += "?"+qp;
+  const res = await fetch(url,{method,headers:{"apikey":KEY,"Authorization":"Bearer "+KEY,"Content-Type":"application/json","Prefer":"return=representation"},body:body?JSON.stringify(body):undefined});
+  if(!res.ok) throw new Error(await res.text());
+  const t = await res.text(); return t?JSON.parse(t):[];
+}
+
+async function getAll(table) {
+  const all=[]; let offset=0;
+  while(true){const b=await apiFetch(table,{params:{limit:1000,offset,order:"id"}});all.push(...b);if(b.length<1000)break;offset+=1000;}
+  return all;
+}
+
+function bdg(label,color){return `<span class="badge" style="background:${color}22;color:${color};border:1px solid ${color}44">${label||""}</span>`;}
+function bar(pct,color="#1d4ed8"){return `<div class="bar-wrap"><div class="bar-inner" style="width:${Math.min(pct,100)}%;background:${color}"></div></div>`;}
+function pagerHtml(id,page,total,per){const pages=Math.ceil(total/per);if(pages<=1)return"";return`<div class="pager"><button class="btn" onclick="changePage('${id}',${page-1})" ${page===0?"disabled":""}>← Prev</button><span>Page ${page+1} / ${pages} · ${total.toLocaleString()} records</span><button class="btn" onclick="changePage('${id}',${page+1})" ${page>=pages-1?"disabled":""}>Next →</button></div>`;}
+
+function changePage(id,p){state.pages[id]=Math.max(0,p);render();}
+
+const TABS = [{id:"overview",label:"📊 Overview"},{id:"vendors",label:"🏢 Vendors"},{id:"products",label:"📦 Products"},{id:"ctrm",label:"⚡ CTRM Coverage"},{id:"risk",label:"🛡 Risk Coverage"},{id:"commodities",label:"🌾 Commodities"},{id:"geo",label:"🌍 Geographic"},{id:"contacts",label:"👤 Contacts"}];
+let activeTab = "overview";
+
+function initNav(){
+  document.getElementById("nav").innerHTML = TABS.map(t=>`<button class="tab ${t.id===activeTab?"active":""}" onclick="setTab('${t.id}')">${t.label}</button>`).join("");
+}
+function setTab(id){
+  activeTab=id;
+  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+  document.getElementById("section-"+id).classList.add("active");
+  initNav(); render();
+}
+
+function renderOverview(){
+  const {vendors,products,ctrm}=state;
+  const byType={};products.forEach(p=>{byType[p.product_type]=(byType[p.product_type]||0)+1;});
+  const deployed=ctrm.filter(r=>getCode(r.coverage_level)==="D").length;
+  const pct=ctrm.length?Math.round(deployed/ctrm.length*100):0;
+  const stats=[{n:vendors.length,l:"Vendors"},{n:products.length,l:"Products"},{n:products.filter(p=>p.product_type==="CTRM Solutions").length,l:"CTRM Products"},{n:ctrm.length>0?pct+"%":"Loading...",l:"CTRM Deployed Rate"}];
+  const regions={};vendors.forEach(v=>{const h=(v.headquarters||"").toLowerCase();let r="Other";if(h.includes("uk")||h.includes("london"))r="United Kingdom";else if(h.includes("usa")||h.includes("houston")||h.includes("florida")||h.includes("texas")||h.includes("new york"))r="USA";else if(h.includes("singapore"))r="Singapore";else if(h.includes("dubai")||h.includes("uae"))r="UAE";else if(h.includes("netherlands"))r="Netherlands";else if(h.includes("germany")||h.includes("switzerland")||h.includes("france"))r="Europe (Other)";else if(h.includes("india"))r="India";else if(h.includes("australia"))r="Australia";regions[r]=(regions[r]||0)+1;});
+  document.getElementById("section-overview").innerHTML=`
+    <div class="stat-grid">${stats.map(s=>`<div class="stat"><div class="stat-n">${s.n}</div><div class="stat-l">${s.l}</div></div>`).join("")}</div>
+    <div class="two-col">
+      <div class="card"><div class="card-head"><span class="card-title">Products by Type</span></div><div style="padding:16px">${Object.entries(byType).sort((a,b)=>b[1]-a[1]).map(([t,c])=>`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>${t}</span><strong style="color:#60a5fa">${c}</strong></div>${bar(c/products.length*100)}</div>`).join("")}</div></div>
+      <div class="card"><div class="card-head"><span class="card-title">Vendors by Region</span></div><div style="padding:16px">${Object.entries(regions).sort((a,b)=>b[1]-a[1]).map(([r,c])=>`<div class="row-item"><span>${r}</span><strong style="color:#60a5fa">${c}</strong></div>`).join("")}</div></div>
+    </div>`;
+}
+
+function renderVendors(){
+  const q=(state.filters.vendors_q||"").toLowerCase();
+  const rows=state.vendors.filter(v=>!q||(v.vendor_name+v.headquarters+v.industries_served).toLowerCase().includes(q));
+  const page=state.pages.vendors||0; const PER=15;
+  const paged=rows.slice(page*PER,(page+1)*PER);
+  document.getElementById("section-vendors").innerHTML=`
+    <div class="card">
+      <div class="card-head"><span class="card-title">🏢 Vendors</span><span class="card-meta">${state.vendors.length} vendors</span></div>
+      <div class="filters"><input value="${state.filters.vendors_q||""}" oninput="setFilter('vendors_q',this.value)" placeholder="Search vendors..."><button class="btn btn-primary" style="margin-left:auto" onclick="openVendorModal(null)">+ Add Vendor</button></div>
+      <div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>Vendor Name</th><th>Headquarters</th><th>Website</th><th>Industry</th><th></th></tr></thead><tbody>
+      ${paged.map(v=>`<tr><td style="color:#60a5fa;width:40px">${v.id}</td><td style="font-weight:600">${v.vendor_name||""}</td><td style="color:#64748b;max-width:180px">${(v.headquarters||"").replace(/\n/g," ")}</td><td><a href="https://${v.website}" target="_blank">${v.website||""}</a></td><td>${bdg(v.industries_served,v.industries_served?.includes("Risk")?"#a78bfa":"#60a5fa")}</td><td><button class="btn" onclick="openVendorModal(${v.id})">Edit</button></td></tr>`).join("")}
+      </tbody></table></div>${pagerHtml("vendors",page,rows.length,PER)}
+    </div>`;
+}
+
+function renderProducts(){
+  const q=(state.filters.products_q||"").toLowerCase();
+  const typeF=state.filters.products_type||"";
+  const types=[...new Set(state.products.map(p=>p.product_type).filter(Boolean))].sort();
+  const rows=state.products.filter(p=>(!typeF||p.product_type===typeF)&&(!q||(p.product_name+p.vendor+p.notes).toLowerCase().includes(q)));
+  const page=state.pages.products||0; const PER=15;
+  const paged=rows.slice(page*PER,(page+1)*PER);
+  document.getElementById("section-products").innerHTML=`
+    <div class="card">
+      <div class="card-head"><span class="card-title">📦 Products</span><span class="card-meta">${state.products.length} products</span></div>
+      <div class="filters"><input value="${q}" oninput="setFilter('products_q',this.value)" placeholder="Search products..."><select onchange="setFilter('products_type',this.value)"><option value="">All Types</option>${types.map(t=>`<option ${t===typeF?"selected":""}>${t}</option>`).join("")}</select><button class="btn btn-primary" style="margin-left:auto" onclick="openProductModal(null)">+ Add Product</button></div>
+      <div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>Product Name</th><th>Type</th><th>Vendor</th><th>Deployment</th><th>Version</th><th>Notes</th><th></th></tr></thead><tbody>
+      ${paged.map(p=>`<tr><td style="color:#60a5fa;width:40px">${p.id}</td><td style="font-weight:600">${p.product_name||""}</td><td>${bdg(p.product_type?.includes("Risk")?"Risk":"CTRM",p.product_type?.includes("Risk")?"#a78bfa":"#60a5fa")}</td><td style="color:#64748b">${p.vendor||""}</td><td style="color:#64748b;max-width:150px;font-size:11px">${p.deployment_model||""}</td><td style="color:#f59e0b;font-weight:600">${p.version_info||""}</td><td style="color:#64748b;max-width:180px;font-size:11px">${(p.notes||"").slice(0,50)}${(p.notes||"").length>50?"…":""}</td><td><button class="btn" onclick="openProductModal(${p.id})">Edit</button></td></tr>`).join("")}
+      </tbody></table></div>${pagerHtml("products",page,rows.length,PER)}
+    </div>`;
+}
+
+function renderCTRM(){
+  const q=(state.filters.ctrm_q||"").toLowerCase();
+  const pF=state.filters.ctrm_prod||""; const cF=state.filters.ctrm_com||""; const covF=state.filters.ctrm_cov||"";
+  const prods=[...new Set(state.ctrm.map(r=>r.product).filter(Boolean))].sort();
+  const coms=[...new Set(state.ctrm.map(r=>r.commodity).filter(Boolean))].sort();
+  const rows=state.ctrm.filter(r=>(!pF||r.product===pF)&&(!cF||r.commodity===cF)&&(!covF||getCode(r.coverage_level)===covF)&&(!q||(r.product+r.function_name).toLowerCase().includes(q)));
+  const page=state.pages.ctrm||0; const PER=50;
+  const paged=rows.slice(page*PER,(page+1)*PER);
+  const loading=state.ctrmLoading;
+  document.getElementById("section-ctrm").innerHTML=`
+    <div class="card">
+      <div class="card-head"><span class="card-title">⚡ CTRM Coverage</span><span class="card-meta">${state.ctrm.length.toLocaleString()} records ${loading?"(loading...)":""}</span></div>
+      ${loading&&state.ctrm.length===0?'<div class="loading">Loading 41,089 CTRM records from database...</div>':`
+      <div class="filters"><input value="${q}" oninput="setFilter('ctrm_q',this.value)" placeholder="Search function..."><select onchange="setFilter('ctrm_prod',this.value)"><option value="">All Products</option>${prods.map(p=>`<option ${p===pF?"selected":""}>${p}</option>`).join("")}</select><select onchange="setFilter('ctrm_com',this.value)"><option value="">All Commodities</option>${coms.map(c=>`<option ${c===cF?"selected":""}>${c}</option>`).join("")}</select><select onchange="setFilter('ctrm_cov',this.value)"><option value="">All Coverage</option><option ${covF==="D"?"selected":""} value="D">Deployed</option><option ${covF==="C"?"selected":""} value="C">Capable</option><option ${covF==="N"?"selected":""} value="N">Not Capable</option><option ${covF==="X"?"selected":""} value="X">N/A</option></select><span style="margin-left:auto;font-size:11px;color:#475569">${rows.length.toLocaleString()} results</span></div>
+      <div style="overflow-x:auto"><table><thead><tr><th>Product</th><th>Function</th><th>Commodity</th><th>Coverage</th></tr></thead><tbody>
+      ${paged.map(r=>{const code=getCode(r.coverage_level);return`<tr><td style="font-weight:600">${r.product||""}</td><td>${r.function_name||""}</td><td>${bdg(r.commodity,"#60a5fa")}</td><td>${bdg(COV_LABEL[code],COV_COLOR[code])}</td></tr>`;}).join("")}
+      </tbody></table></div>${pagerHtml("ctrm",page,rows.length,PER)}`}
+    </div>`;
+}
+
+function renderRisk(){
+  const q=(state.filters.risk_q||"").toLowerCase();
+  const pF=state.filters.risk_prod||""; const catF=state.filters.risk_cat||"";
+  const prods=[...new Set(state.risk.map(r=>r.product).filter(Boolean))].sort();
+  const cats=[...new Set(state.risk.map(r=>r.category).filter(Boolean))].sort();
+  const rows=state.risk.filter(r=>(!pF||r.product===pF)&&(!catF||r.category===catF)&&(!q||(r.function_name||"").toLowerCase().includes(q)));
+  const page=state.pages.risk||0; const PER=30;
+  const paged=rows.slice(page*PER,(page+1)*PER);
+  document.getElementById("section-risk").innerHTML=`
+    <div class="card">
+      <div class="card-head"><span class="card-title">🛡 Risk Coverage</span><span class="card-meta">${state.risk.length.toLocaleString()} records</span></div>
+      <div class="filters"><input value="${q}" oninput="setFilter('risk_q',this.value)" placeholder="Search functions..."><select onchange="setFilter('risk_prod',this.value)"><option value="">All Products</option>${prods.map(p=>`<option ${p===pF?"selected":""}>${p}</option>`).join("")}</select><select onchange="setFilter('risk_cat',this.value)"><option value="">All Categories</option>${cats.map(c=>`<option ${c===catF?"selected":""}>${c}</option>`).join("")}</select><span style="margin-left:auto;font-size:11px;color:#475569">${rows.length.toLocaleString()} results</span></div>
+      <div style="overflow-x:auto"><table><thead><tr><th>Product</th><th>Category</th><th>Function</th><th>Coverage</th></tr></thead><tbody>
+      ${paged.map(r=>{const code=getCode(r.coverage_level);return`<tr><td style="font-weight:600">${r.product||""}</td><td>${bdg(r.category,"#a78bfa")}</td><td>${r.function_name||""}</td><td>${bdg(COV_LABEL[code],COV_COLOR[code])}</td></tr>`;}).join("")}
+      </tbody></table></div>${pagerHtml("risk",page,rows.length,PER)}
+    </div>`;
+}
+
+function renderGeo(){
+  const q=(state.filters.geo_q||"").toLowerCase();
+  const typeF=state.filters.geo_type||"";
+  const types=[...new Set(state.geo.map(g=>g.product_type).filter(Boolean))].sort();
+  const rows=state.geo.filter(g=>(!typeF||g.product_type===typeF)&&(!q||(g.product||"").toLowerCase().includes(q)));
+  const COLS=[{k:"north_america",l:"N. America"},{k:"europe_russia",l:"Europe"},{k:"south_america",l:"S. America"},{k:"middle_east_africa",l:"ME & Africa"},{k:"asia_australia",l:"Asia"}];
+  const cell=v=>{if(!v)return`<span style="color:#1e2d40">—</span>`;const p=Math.round(v*100);const col=p>40?"#22c55e":p>20?"#f59e0b":"#60a5fa";return`<div><div style="font-size:11px;color:${col};font-weight:600;margin-bottom:2px">${p}%</div>${bar(p,col)}</div>`;};
+  document.getElementById("section-geo").innerHTML=`
+    <div class="card">
+      <div class="card-head"><span class="card-title">🌍 Geographic Coverage</span><span class="card-meta">${rows.length} products</span></div>
+      <div class="filters"><input value="${q}" oninput="setFilter('geo_q',this.value)" placeholder="Search product..."><select onchange="setFilter('geo_type',this.value)"><option value="">All Types</option>${types.map(t=>`<option ${t===typeF?"selected":""}>${t}</option>`).join("")}</select></div>
+      <div style="overflow-x:auto"><table><thead><tr><th>Product</th><th>Type</th>${COLS.map(c=>`<th>${c.l}</th>`).join("")}</tr></thead><tbody>
+      ${rows.map(g=>`<tr><td style="font-weight:600;white-space:nowrap">${g.product||""}</td><td>${bdg(g.product_type?.includes("Risk")?"Risk":"CTRM",g.product_type?.includes("Risk")?"#a78bfa":"#60a5fa")}</td>${COLS.map(c=>`<td style="min-width:100px">${cell(g[c.k])}</td>`).join("")}</tr>`).join("")}
+      </tbody></table></div>
+    </div>`;
+}
+
+function renderCommodities(){
+  const q=(state.filters.pcc_q||"").toLowerCase();
+  const comF=state.filters.pcc_com||"";
+  const coms=[...new Set(state.pcc.map(p=>p.commodity).filter(Boolean))].sort();
+  const rows=state.pcc.filter(p=>(!comF||p.commodity===comF)&&(!q||(p.product||"").toLowerCase().includes(q)));
+  const page=state.pages.pcc||0; const PER=30;
+  const paged=rows.slice(page*PER,(page+1)*PER);
+  document.getElementById("section-commodities").innerHTML=`
+    <div class="card">
+      <div class="card-head"><span class="card-title">🌾 Commodity Coverage</span><span class="card-meta">${rows.length} results</span></div>
+      <div class="filters"><input value="${q}" oninput="setFilter('pcc_q',this.value)" placeholder="Search product..."><select onchange="setFilter('pcc_com',this.value)"><option value="">All Commodities</option>${coms.map(c=>`<option ${c===comF?"selected":""}>${c}</option>`).join("")}</select></div>
+      <div style="overflow-x:auto"><table><thead><tr><th>Product</th><th>Type</th><th>Commodity</th><th>Coverage Level</th></tr></thead><tbody>
+      ${paged.map(p=>`<tr><td style="font-weight:600">${p.product||""}</td><td>${bdg(p.product_type?.includes("Risk")?"Risk":"CTRM",p.product_type?.includes("Risk")?"#a78bfa":"#60a5fa")}</td><td>${bdg(p.commodity,"#22c55e")}</td><td style="color:${p.coverage_level==="Covered"?"#22c55e":"#f59e0b"};font-weight:600">${p.coverage_level||""}</td></tr>`).join("")}
+      </tbody></table></div>${pagerHtml("pcc",page,rows.length,PER)}
+    </div>`;
+}
+
+function renderContacts(){
+  document.getElementById("section-contacts").innerHTML=`
+    <div class="card">
+      <div class="card-head"><span class="card-title">👤 Contacts</span><span class="card-meta">${state.contacts.length} contacts</span></div>
+      <div class="filters"><button class="btn btn-primary" style="margin-left:auto" onclick="openContactModal(null)">+ Add Contact</button></div>
+      ${state.contacts.length===0?'<div class="loading">No contacts yet — click + Add Contact</div>':`
+      <div style="overflow-x:auto"><table><thead><tr><th>Product</th><th>Vendor</th><th>Name</th><th>Role</th><th>Email</th><th>Phone</th><th>Region</th><th></th></tr></thead><tbody>
+      ${state.contacts.map(c=>`<tr><td style="font-weight:600">${c.product||""}</td><td style="color:#64748b">${c.vendor||""}</td><td>${c.contact_name||""}</td><td style="color:#64748b">${c.role_title||""}</td><td><a href="mailto:${c.email}">${c.email||""}</a></td><td style="color:#64748b">${c.phone_number||""}</td><td style="color:#64748b">${c.region||""}</td><td><button class="btn" onclick="openContactModal(${c.id})">Edit</button></td></tr>`).join("")}
+      </tbody></table></div>`}
+    </div>`;
+}
+
+function setFilter(key,val){state.filters[key]=val;state.pages={};render();}
+
+function render(){
+  if(activeTab==="overview") renderOverview();
+  else if(activeTab==="vendors") renderVendors();
+  else if(activeTab==="products") renderProducts();
+  else if(activeTab==="ctrm") renderCTRM();
+  else if(activeTab==="risk") renderRisk();
+  else if(activeTab==="geo") renderGeo();
+  else if(activeTab==="commodities") renderCommodities();
+  else if(activeTab==="contacts") renderContacts();
+}
+
+function openModal(title,fields,saveFn){
+  document.getElementById("modal-title").textContent=title;
+  document.getElementById("modal-fields").innerHTML=fields.map(f=>`<div class="fg"><label class="lbl">${f.label}</label>${f.type==="textarea"?`<textarea ${f.readOnly?"readonly":""}>${f.value||""}</textarea>`:f.type==="select"?`<select>${f.options.map(o=>`<option ${o===f.value?"selected":""}>${o}</option>`).join("")}</select>`:`<input type="${f.type||"text"}" value="${f.value||""}" ${f.readOnly?"readonly":""}>`}</div>`).join("");
+  modalSaveFn=saveFn;
+  document.getElementById("modal").classList.add("open");
+}
+function closeModal(){document.getElementById("modal").classList.remove("open");modalSaveFn=null;}
+function saveModal(){if(modalSaveFn)modalSaveFn();closeModal();}
+
+function getModalValues(keys){
+  const inputs=[...document.getElementById("modal-fields").querySelectorAll("input,select,textarea")];
+  const result={};keys.forEach((k,i)=>{result[k]=inputs[i]?.value||"";});
+  return result;
+}
+
+function openVendorModal(id){
+  const v=id?state.vendors.find(x=>x.id===id):null;
+  openModal(v?"Edit Vendor":"Add Vendor",[
+    {label:"ID",value:v?.id||"",readOnly:true},{label:"Vendor Name",value:v?.vendor_name||""},{label:"Headquarters",type:"textarea",value:v?.headquarters||""},{label:"Website",value:v?.website||""},{label:"Industries Served",value:v?.industries_served||""}
+  ],async()=>{
+    const vals=getModalValues(["id","vendor_name","headquarters","website","industries_served"]);
+    try{if(v){await apiFetch(`vendors?id=eq.${v.id}`,{method:"PATCH",body:vals});state.vendors=state.vendors.map(x=>x.id===v.id?{...x,...vals}:x);}
+    else{const res=await apiFetch("vendors",{method:"POST",body:vals});state.vendors=[...state.vendors,res[0]];}render();}catch(e){alert("Error: "+e.message);}
+  });
+}
+
+function openProductModal(id){
+  const p=id?state.products.find(x=>x.id===id):null;
+  const types=[...new Set(state.products.map(x=>x.product_type).filter(Boolean))].sort();
+  const vendors=state.vendors.map(v=>v.vendor_name).filter(Boolean).sort();
+  openModal(p?"Edit Product":"Add Product",[
+    {label:"ID",value:p?.id||"",readOnly:true},{label:"Product Name",value:p?.product_name||""},{label:"Product Type",type:"select",value:p?.product_type||"",options:types},{label:"Vendor",type:"select",value:p?.vendor||"",options:vendors},{label:"Deployment Model",value:p?.deployment_model||""},{label:"Version",value:p?.version_info||""},{label:"Notes",type:"textarea",value:p?.notes||""}
+  ],async()=>{
+    const vals=getModalValues(["id","product_name","product_type","vendor","deployment_model","version_info","notes"]);
+    try{if(p){await apiFetch(`products?id=eq.${p.id}`,{method:"PATCH",body:vals});state.products=state.products.map(x=>x.id===p.id?{...x,...vals}:x);}
+    else{const res=await apiFetch("products",{method:"POST",body:vals});state.products=[...state.products,res[0]];}render();}catch(e){alert("Error: "+e.message);}
+  });
+}
+
+function openContactModal(id){
+  const ct=id?state.contacts.find(x=>x.id===id):null;
+  const prods=state.products.map(p=>p.product_name).filter(Boolean).sort();
+  const vendors=state.vendors.map(v=>v.vendor_name).filter(Boolean).sort();
+  openModal(ct?"Edit Contact":"Add Contact",[
+    {label:"ID",value:ct?.id||"",readOnly:true},{label:"Product",type:"select",value:ct?.product||"",options:prods},{label:"Vendor",type:"select",value:ct?.vendor||"",options:vendors},{label:"Contact Name",value:ct?.contact_name||""},{label:"Role / Title",value:ct?.role_title||""},{label:"Email",value:ct?.email||""},{label:"Phone",value:ct?.phone_number||""},{label:"Region",value:ct?.region||""}
+  ],async()=>{
+    const vals=getModalValues(["id","product","vendor","contact_name","role_title","email","phone_number","region"]);
+    try{if(ct){await apiFetch(`product_contacts?id=eq.${ct.id}`,{method:"PATCH",body:vals});state.contacts=state.contacts.map(x=>x.id===ct.id?{...x,...vals}:x);}
+    else{const res=await apiFetch("product_contacts",{method:"POST",body:vals});state.contacts=[...state.contacts,res[0]];}render();}catch(e){alert("Error: "+e.message);}
+  });
+}
+
+async function init(){
+  document.getElementById("section-overview").innerHTML='<div class="loading">Connecting to database...</div>';
+  initNav();
+  try{
+    const [v,p,ct,g,pcc,risk]=await Promise.all([getAll("vendors"),getAll("products"),getAll("product_contacts"),getAll("geographic_coverage"),getAll("product_commodities_coverage"),getAll("product_function_risk")]);
+    state.vendors=v;state.products=p;state.contacts=ct;state.geo=g;state.pcc=pcc;state.risk=risk;
+    state.ctrmLoading=true;
+    render();
+    const ctrm=await getAll("product_function_ctrm");
+    state.ctrm=ctrm;state.ctrmLoading=false;
+    if(activeTab==="ctrm"||activeTab==="overview")render();
+  }catch(e){
+    document.getElementById("section-overview").innerHTML=`<div class="loading" style="color:#ef4444">Error: ${e.message}</div>`;
+  }
+}
+
+init();
+</script>
+</body>
+</html>
